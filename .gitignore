@@ -1,0 +1,37 @@
+# --- Secrets: never committed ---
+.env
+.env.local
+.env.*.local
+!.env.example
+*.pem
+*.key
+
+# --- Python (backend) ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# --- Node (frontend) ---
+node_modules/
+dist/
+.vite/
+*.local
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Stray git lock files (safe to ignore if ever regenerated) ---
+.git/*.lock
+*.lock.stale*
+
+# --- Files the Claude desktop app syncs into this folder when it delivers
+# a file to chat (reports, exports) -- not part of the app itself ---
+Claude outputs/
