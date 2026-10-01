@@ -42,6 +42,8 @@ async def list_inventory(
             return {"items": [item.model_dump(exclude_none=True) for item in items]}
     except VAutoNotConfiguredError as e:
         raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
@@ -62,6 +64,8 @@ async def get_inventory_detail(
             return item.model_dump(exclude_none=True)
     except VAutoNotConfiguredError as e:
         raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
@@ -89,6 +93,8 @@ async def list_appraisals(
             return {"items": [item.model_dump(exclude_none=True) for item in items]}
     except VAutoNotConfiguredError as e:
         raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
@@ -109,6 +115,8 @@ async def get_appraisal_detail(
             return item.model_dump(exclude_none=True)
     except VAutoNotConfiguredError as e:
         raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
