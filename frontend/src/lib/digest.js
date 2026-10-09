@@ -16,19 +16,44 @@ export const AGE_BANDS = [
 
 const MAX_STATUS_ROWS = 7
 
+export const NO_DATE_BAND = 'No date'
+
+export function bandLabelOf(age) {
+  if (age === null || age === undefined) return NO_DATE_BAND
+  const b = AGE_BANDS.find((x) => age >= x.min && age <= x.max)
+  return b ? b.label : NO_DATE_BAND
+}
+
 export function flattenInventory(item) {
+  const age = daysInInventory(item.createdOn)
+  const year = item.vehicle?.year ?? null
+  const make = item.vehicle?.make ?? ''
+  const model = item.vehicle?.model ?? ''
+  const vin = item.vehicle?.vin ?? ''
+  const stockNumber = item.stockNumber ?? ''
+  const status = item.status || 'No status'
   return {
     id: item.inventoryId,
     storeId: item.storeId,
     storeName: item.storeName,
-    year: item.vehicle?.year ?? null,
-    make: item.vehicle?.make ?? '',
-    model: item.vehicle?.model ?? '',
-    vin: item.vehicle?.vin ?? '',
-    stockNumber: item.stockNumber ?? '',
-    status: item.status || 'No status',
+    year,
+    make,
+    model,
+    vin,
+    stockNumber,
+    status,
+    disposition: item.disposition || '',
     listPrice: item.pricing?.listPrice ?? null,
-    age: daysInInventory(item.createdOn),
+    currency: item.pricing?.currency ?? 'USD',
+    age,
+    band: bandLabelOf(age),
+    // Lower-case text used by the search box, built once per record.
+    search: [year, make, model, item.vehicle?.series, vin, stockNumber, status, item.storeName]
+      .filter((x) => x !== null && x !== undefined && x !== '')
+      .join(' ')
+      .toLowerCase(),
+    // The full record as vAuto returned it, shown in the detail panel.
+    raw: item,
   }
 }
 

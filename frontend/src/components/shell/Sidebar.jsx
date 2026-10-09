@@ -11,7 +11,7 @@ const DOT = {
   planned: 'bg-ink-3/50',
 }
 
-function Item({ to, end, icon: Icon, label, collapsed, dot, sub = false, onClick, expanded }) {
+function Item({ to, end, icon: Icon, label, collapsed, dot, sub = false, onClick, expanded, active }) {
   return (
     <NavLink
       to={to}
@@ -22,12 +22,12 @@ function Item({ to, end, icon: Icon, label, collapsed, dot, sub = false, onClick
       className={({ isActive }) =>
         `relative flex items-center gap-3 rounded-xl text-sm font-medium transition-colors ${
           sub ? 'py-2 pl-11 pr-3' : 'px-3 py-2.5'
-        } ${isActive ? 'text-ink' : 'text-ink-2 hover:text-ink'}`
+        } ${(active ?? isActive) ? 'text-ink' : 'text-ink-2 hover:text-ink'}`
       }
     >
-      {({ isActive }) => (
+      {({ isActive: routerActive }) => (
         <>
-          {isActive && (
+          {(active ?? routerActive) && (
             <motion.span
               layoutId="nav-pill"
               className="absolute inset-0 rounded-xl bg-accent/12 ring-1 ring-accent/30"
@@ -57,7 +57,15 @@ function Item({ to, end, icon: Icon, label, collapsed, dot, sub = false, onClick
 const VAUTO_PATHS = ['/platforms/vauto', '/inventory', '/appraisals', '/aged-inventory']
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  const agedView = new URLSearchParams(search).get('aged') === '1'
+  // "Inventory" and "Aged inventory" are the same page with a different
+  // filter, so the address' ?aged=1 decides which of the two is lit.
+  const subActive = (l) => {
+    if (l.to === '/inventory') return pathname.startsWith('/inventory') && !agedView
+    if (l.to.startsWith('/inventory?')) return pathname === '/inventory' && agedView
+    return undefined
+  }
   const inVauto = VAUTO_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   const [vautoOpen, setVautoOpen] = useState(inVauto)
 
@@ -114,7 +122,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 >
                   <div className="mt-0.5 space-y-0.5">
                     {VAUTO_LINKS.map((l) => (
-                      <Item key={l.to} {...l} collapsed={collapsed} sub />
+                      <Item key={l.to} {...l} collapsed={collapsed} sub active={subActive(l)} />
                     ))}
                   </div>
                 </motion.div>

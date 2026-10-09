@@ -6,7 +6,7 @@ export const HOME_LINK = { to: '/', label: 'Home', icon: Home, end: true }
 export const VAUTO_LINKS = [
   { to: '/inventory', label: 'Inventory', icon: Car },
   { to: '/appraisals', label: 'Appraisals', icon: ClipboardList },
-  { to: '/aged-inventory', label: 'Aged inventory', icon: Hourglass },
+  { to: '/inventory?aged=1', label: 'Aged inventory', icon: Hourglass },
 ]
 
 export const PLATFORM_ICONS = {

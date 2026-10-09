@@ -33,7 +33,7 @@ export default function AppShell() {
 
   return (
     <div className="relative min-h-screen">
-      <AmbientBackground />
+      <AmbientBackground animated={pathname === '/'} />
       <div className="flex">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
         <div className="min-w-0 flex-1">

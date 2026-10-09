@@ -79,6 +79,11 @@
     position: absolute;
     border-radius: 9999px;
     filter: blur(90px);
+  }
+
+  /* The slow drifting glow is only used on Home. On long scrolling pages a
+     moving blurred layer makes scrolling stutter on modest graphics cards. */
+  .orb-drift {
     animation: drift 26s ease-in-out infinite alternate;
   }
 }
@@ -100,7 +105,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .text-gradient,
-  .orb {
+  .orb,
+  .orb-drift {
     animation: none;
   }
 }
