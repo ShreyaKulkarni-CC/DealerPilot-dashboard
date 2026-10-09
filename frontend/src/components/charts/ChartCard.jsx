@@ -61,7 +61,7 @@ export default function ChartCard({ title, subtitle, rows, stores, labelHeader =
     <section className={`h-full rounded-3xl border border-line/10 bg-surface p-6 ${className}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-display text-lg font-semibold text-ink">{title}</h3>
+          <h2 className="font-display text-lg font-semibold text-ink">{title}</h2>
           {subtitle && <p className="mt-0.5 text-sm text-ink-3">{subtitle}</p>}
         </div>
         <div role="group" aria-label={`${title} view`} className="flex rounded-lg border border-line/10 p-0.5 text-xs font-medium">

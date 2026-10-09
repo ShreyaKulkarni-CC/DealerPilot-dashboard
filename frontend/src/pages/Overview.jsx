@@ -6,6 +6,7 @@ import StoreBars from '../components/charts/StoreBars'
 import WeeklyLines from '../components/charts/WeeklyLines'
 import CountUp from '../components/ui/CountUp'
 import Reveal from '../components/ui/Reveal'
+import { Link } from 'react-router-dom'
 import Skeleton from '../components/ui/Skeleton'
 import {
   AGED_OVER_DAYS,
@@ -44,7 +45,7 @@ function Tile({ label, children, note, className = '' }) {
 
 function ErrorPanel({ title, message }) {
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
+    <div role="alert" className="flex items-start gap-3 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-800 dark:text-red-200">
       <TriangleAlert size={18} className="mt-0.5 shrink-0" />
       <div>
         <div className="font-semibold">{title}</div>
@@ -244,7 +245,7 @@ export default function Overview() {
             {/* ---------- Inventory charts ---------- */}
             {inv && (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <Reveal className="lg:col-span-7">
+                <Reveal className="lg:col-span-7 [&>*]:h-full">
                   <ChartCard
                     title="How long vehicles have been on the lot"
                     subtitle="Days since each vehicle was added, in four age bands"
@@ -256,7 +257,7 @@ export default function Overview() {
                     <StoreBars rows={inv.bands} stores={stores} layout="columns" ariaLabel="Vehicles per age band, by store" />
                   </ChartCard>
                 </Reveal>
-                <Reveal delay={0.08} className="lg:col-span-5">
+                <Reveal delay={0.08} className="lg:col-span-5 [&>*]:h-full">
                   <ChartCard
                     title="Inventory by status"
                     subtitle="Biggest groups first"
@@ -273,7 +274,7 @@ export default function Overview() {
             {/* ---------- Appraisal charts ---------- */}
             {apr && (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <Reveal className="lg:col-span-7">
+                <Reveal className="lg:col-span-7 [&>*]:h-full">
                   <ChartCard
                     title="Appraisals per week"
                     subtitle={`Last ${WEEKS_SHOWN} weeks, by the date each appraisal was created`}
@@ -289,7 +290,7 @@ export default function Overview() {
                     <WeeklyLines rows={apr.weeks} stores={stores} ariaLabel="Appraisals per week, by store" />
                   </ChartCard>
                 </Reveal>
-                <Reveal delay={0.08} className="lg:col-span-5">
+                <Reveal delay={0.08} className="lg:col-span-5 [&>*]:h-full">
                   <ChartCard title="Appraisals by status" subtitle="Biggest groups first" rows={apr.statuses} stores={stores} labelHeader="Status">
                     <StoreBars rows={apr.statuses} stores={stores} layout="rows" unit="appraisals" ariaLabel="Appraisals per status, by store" />
                   </ChartCard>
@@ -301,8 +302,8 @@ export default function Overview() {
             {inv && inv.oldest.length > 0 && (
               <Reveal>
                 <Panel>
-                  <h3 className="font-display text-lg font-semibold text-ink">Longest on the lot</h3>
-                  <p className="mt-0.5 text-sm text-ink-3">The {inv.oldest.length} oldest vehicles right now. The full list with filters is coming in the Inventory page.</p>
+                  <h2 className="font-display text-lg font-semibold text-ink">Longest on the lot</h2>
+                  <p className="mt-0.5 text-sm text-ink-3">The {inv.oldest.length} oldest vehicles right now. See the full list on the <Link to="/inventory" className="font-medium text-accent underline-offset-2 hover:underline">Inventory page</Link>.</p>
                   <div className="mt-4 overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead>

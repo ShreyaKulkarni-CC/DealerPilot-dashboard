@@ -197,7 +197,7 @@ export default function Inventory() {
           ) : (
             <span className="inline-flex items-center justify-end gap-2">
               {r.age > AGED_OVER_DAYS && (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-500/30 dark:text-amber-300">
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-inset ring-amber-500/30 dark:text-amber-300">
                   Aged
                 </span>
               )}
@@ -353,7 +353,7 @@ export default function Inventory() {
         {loading && <LoadingState />}
 
         {!loading && inventory && !inventory.ok && (
-          <div role="alert" className="flex items-start gap-3 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
+          <div role="alert" className="flex items-start gap-3 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-800 dark:text-red-200">
             <TriangleAlert size={18} className="mt-0.5 shrink-0" />
             <div>
               <div className="font-semibold">Inventory could not be loaded</div>
@@ -363,7 +363,7 @@ export default function Inventory() {
         )}
 
         {!loading && storeIssues.map((s) => (
-          <div key={s.id} role="alert" className="flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
+          <div key={s.id} role="alert" className="flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-800 dark:text-red-200">
             <TriangleAlert size={18} className="mt-0.5 shrink-0" />
             <span>
               <strong>{s.name}</strong> could not be loaded. {s.error}

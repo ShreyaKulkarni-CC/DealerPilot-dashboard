@@ -37,7 +37,7 @@ export default function StoreBars({ rows, stores, layout = 'columns', unit = 've
         <BarChart
           data={rows}
           layout={horizontal ? 'vertical' : 'horizontal'}
-          margin={horizontal ? { top: 4, right: 44, left: 0, bottom: 4 } : { top: 24, right: 8, left: -8, bottom: 4 }}
+          margin={horizontal ? { top: 4, right: 44, left: 0, bottom: 4 } : { top: 24, right: 8, left: 0, bottom: 4 }}
         >
           <CartesianGrid stroke={GRID} horizontal={!horizontal} vertical={horizontal} />
           {horizontal ? (
@@ -55,7 +55,7 @@ export default function StoreBars({ rows, stores, layout = 'columns', unit = 've
           ) : (
             <>
               <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={{ stroke: AXIS }} />
-              <YAxis allowDecimals={false} tick={TICK} tickLine={false} axisLine={false} width={40} />
+              <YAxis allowDecimals={false} tick={TICK} tickLine={false} axisLine={false} width={48} />
             </>
           )}
           <Tooltip

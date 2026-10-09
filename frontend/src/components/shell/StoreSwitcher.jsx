@@ -7,7 +7,7 @@ export default function StoreSwitcher() {
   const { stores, selected, setSelected, loading, error } = useStores()
 
   if (loading) {
-    return <div className="h-10 w-48 animate-pulse rounded-xl bg-ink/5" aria-label="Loading stores" />
+    return <div className="h-10 w-full animate-pulse rounded-xl bg-ink/5 md:w-48" aria-label="Loading stores" />
   }
   if (error || stores.length === 0) {
     return (
@@ -30,7 +30,7 @@ export default function StoreSwitcher() {
     <div
       role="radiogroup"
       aria-label="Store"
-      className="relative flex h-10 items-center rounded-xl border border-line/10 bg-surface/60 p-1 backdrop-blur-xl"
+      className="relative flex h-10 w-full items-center rounded-xl border border-line/10 bg-surface/60 p-1 backdrop-blur-xl md:w-auto"
     >
       {options.map((o) => {
         const active = selected === o.id
@@ -41,7 +41,7 @@ export default function StoreSwitcher() {
             role="radio"
             aria-checked={active}
             onClick={() => setSelected(o.id)}
-            className={`relative z-10 h-8 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors ${
+            className={`relative z-10 h-8 min-w-0 flex-auto truncate whitespace-nowrap rounded-lg px-1.5 text-[13px] font-medium transition-colors md:flex-none md:px-3 md:text-sm ${
               active ? 'text-ink' : 'text-ink-3 hover:text-ink-2'
             }`}
           >

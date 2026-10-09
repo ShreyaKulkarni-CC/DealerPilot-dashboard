@@ -8,7 +8,7 @@ export default function SegmentedControl({ label, options, value, onChange }) {
     <div
       role="radiogroup"
       aria-label={label}
-      className="flex items-center rounded-xl border border-line/10 bg-surface/60 p-1 backdrop-blur-xl"
+      className="flex max-w-full items-center overflow-x-auto rounded-xl border border-line/10 bg-surface/60 p-1 backdrop-blur-xl"
     >
       {options.map((o) => {
         const active = value === o.id

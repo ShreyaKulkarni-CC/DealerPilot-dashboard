@@ -13,7 +13,7 @@ export default function WeeklyLines({ rows, stores, unit = 'appraisals', ariaLab
   return (
     <div role="img" aria-label={ariaLabel} style={{ width: '100%', height: 260 }}>
       <ResponsiveContainer>
-        <LineChart data={rows} margin={{ top: 12, right: 12, left: -8, bottom: 4 }}>
+        <LineChart data={rows} margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
           <CartesianGrid stroke="rgb(var(--line) / 0.08)" vertical={false} />
           <XAxis
             dataKey="label"
@@ -23,7 +23,7 @@ export default function WeeklyLines({ rows, stores, unit = 'appraisals', ariaLab
             interval="preserveStartEnd"
             minTickGap={24}
           />
-          <YAxis allowDecimals={false} tick={TICK} tickLine={false} axisLine={false} width={40} />
+          <YAxis allowDecimals={false} tick={TICK} tickLine={false} axisLine={false} width={48} />
           <Tooltip
             cursor={{ stroke: 'rgb(var(--line) / 0.25)', strokeWidth: 1 }}
             content={<VizTooltip stores={stores} unit={unit} />}

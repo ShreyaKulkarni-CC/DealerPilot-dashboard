@@ -212,7 +212,7 @@ export default function Appraisals() {
         width: '104px',
         cell: (r) =>
           r.completed ? (
-            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-300">
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-300">
               Yes
             </span>
           ) : (
@@ -348,7 +348,7 @@ export default function Appraisals() {
         {loading && <LoadingState />}
 
         {!loading && appraisals && !appraisals.ok && (
-          <div role="alert" className="flex items-start gap-3 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
+          <div role="alert" className="flex items-start gap-3 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-800 dark:text-red-200">
             <TriangleAlert size={18} className="mt-0.5 shrink-0" />
             <div>
               <div className="font-semibold">Appraisals could not be loaded</div>
@@ -358,7 +358,7 @@ export default function Appraisals() {
         )}
 
         {!loading && storeIssues.map((s) => (
-          <div key={s.id} role="alert" className="flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
+          <div key={s.id} role="alert" className="flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-800 dark:text-red-200">
             <TriangleAlert size={18} className="mt-0.5 shrink-0" />
             <span>
               <strong>{s.name}</strong> could not be loaded. {s.error}

@@ -10,9 +10,9 @@
     --surface-2: 250 248 244;
     --ink: 20 18 15;
     --ink-2: 82 78 72;
-    --ink-3: 122 116 108;
+    --ink-3: 90 86 80;
     --line: 20 18 15;
-    --accent: 200 68 8;
+    --accent: 160 46 4;
     /* Chart colours: validated categorical palette, slots 1-8 (light steps) */
     --series-1: #2a78d6;
     --series-2: #eb6834;
@@ -32,7 +32,7 @@
     --surface-2: 30 30 36;
     --ink: 244 242 238;
     --ink-2: 168 164 158;
-    --ink-3: 118 114 108;
+    --ink-3: 158 154 148;
     --line: 255 255 255;
     --accent: 255 122 54;
     /* Same eight hues, stepped for the dark surface */
@@ -106,8 +106,13 @@
 @media (prefers-reduced-motion: reduce) {
   .text-gradient,
   .orb,
-  .orb-drift {
+  .orb-drift,
+  .animate-pulse {
     animation: none;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }
 

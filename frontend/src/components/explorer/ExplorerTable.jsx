@@ -127,6 +127,35 @@ const ExplorerTable = forwardRef(function ExplorerTable(
     [groups, resetKey],
   )
 
+  // Keyboard: only one row at a time is in the Tab order (so Tab moves past the
+  // table in one press); the arrow keys, Home, End, Page Up and Page Down move
+  // between rows and groups.
+  const [tabKey, setTabKey] = useState(null)
+  const virtualItems = virtualizer.getVirtualItems()
+  const tabbable = virtualItems.some((vi) => vi.key === tabKey) ? tabKey : virtualItems[0]?.key
+
+  function focusRow(index, tries = 0) {
+    requestAnimationFrame(() => {
+      const el = scrollRef.current?.querySelector(`[role="row"][aria-rowindex="${index + 1}"]`)
+      if (el) (el.matches('[tabindex]') ? el : el.querySelector('button'))?.focus()
+      else if (tries < 6) focusRow(index, tries + 1)
+    })
+  }
+
+  function onGridKeyDown(e) {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'].includes(e.key)) return
+    const rowEl = e.target.closest?.('[role="row"][aria-rowindex]')
+    if (!rowEl) return
+    const cur = Number(rowEl.getAttribute('aria-rowindex')) - 1
+    const page = Math.max(1, Math.floor((scrollRef.current?.clientHeight || 400) / ROW_HEIGHT) - 2)
+    const moves = { ArrowDown: cur + 1, ArrowUp: cur - 1, PageDown: cur + page, PageUp: cur - page, Home: 0, End: flat.length - 1 }
+    const next = Math.min(flat.length - 1, Math.max(0, moves[e.key]))
+    if (next === cur) return
+    e.preventDefault()
+    virtualizer.scrollToIndex(next)
+    focusRow(next)
+  }
+
   const template = columns.map((c) => c.width || 'minmax(100px, 1fr)').join(' ')
   const headerGroup = table.getHeaderGroups()[0]
   const multi = sorting.length > 1
@@ -148,6 +177,7 @@ const ExplorerTable = forwardRef(function ExplorerTable(
       role="table"
       aria-label={label}
       aria-rowcount={flat.length}
+      onKeyDown={onGridKeyDown}
       className="relative overflow-auto rounded-3xl border border-line/10 bg-surface"
       style={{ height }}
     >
@@ -199,9 +229,12 @@ const ExplorerTable = forwardRef(function ExplorerTable(
               const g = item.group
               const open = !collapsed.has(g.key)
               return (
-                <div key={vi.key} role="row" aria-rowindex={vi.index + 1} style={pos}>
+                <div key={vi.key} role="row" aria-rowindex={vi.index + 1} style={{ ...pos, scrollMarginTop: 44 }}>
+                  <div role="cell" aria-colspan={columns.length} className="h-full">
                   <button
                     type="button"
+                    tabIndex={vi.key === tabbable ? 0 : -1}
+                    onFocus={() => setTabKey(vi.key)}
                     onClick={() => toggleGroup(g.key)}
                     aria-expanded={open}
                     className="flex h-full w-full items-center gap-3 border-b border-line/10 bg-ink/[0.04] px-5 text-left transition-colors hover:bg-ink/[0.07]"
@@ -213,6 +246,7 @@ const ExplorerTable = forwardRef(function ExplorerTable(
                     </span>
                     {groupSummary && <span className="ml-auto truncate text-xs text-ink-3">{groupSummary(g.rows)}</span>}
                   </button>
+                  </div>
                 </div>
               )
             }
@@ -226,7 +260,8 @@ const ExplorerTable = forwardRef(function ExplorerTable(
                 role="row"
                 aria-rowindex={vi.index + 1}
                 aria-selected={selected}
-                tabIndex={0}
+                tabIndex={vi.key === tabbable ? 0 : -1}
+                onFocus={() => setTabKey(vi.key)}
                 onClick={() => onSelect(row)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -237,7 +272,7 @@ const ExplorerTable = forwardRef(function ExplorerTable(
                 className={`grid cursor-pointer items-center border-b border-line/5 px-4 text-sm transition-colors ${
                   selected ? 'bg-accent/10' : 'hover:bg-ink/[0.04]'
                 }`}
-                style={{ ...pos, gridTemplateColumns: template }}
+                style={{ ...pos, gridTemplateColumns: template, scrollMarginTop: 44 }}
               >
                 {columns.map((c) => (
                   <div

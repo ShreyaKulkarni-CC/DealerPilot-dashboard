@@ -42,6 +42,7 @@ export default function FacetFilter({ label, options, selected, onChange }) {
       <Popover.Portal>
         <Popover.Content
           align="start"
+          aria-label={`${label} filter`}
           sideOffset={8}
           className="z-50 w-72 rounded-2xl border border-line/15 bg-surface p-2 shadow-2xl outline-none"
         >

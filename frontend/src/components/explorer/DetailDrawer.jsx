@@ -29,7 +29,7 @@ export default function DetailDrawer({ open, onClose, title, subtitle, badge, se
   return (
     <AnimatePresence>
       {open && (
-        <motion.aside
+        <motion.div
           role="dialog"
           aria-label={title || 'Details'}
           initial={{ x: 40, opacity: 0 }}
@@ -75,7 +75,7 @@ export default function DetailDrawer({ open, onClose, title, subtitle, badge, se
           </div>
 
           {actions && <div className="border-t border-line/10 px-6 py-4">{actions}</div>}
-        </motion.aside>
+        </motion.div>
       )}
     </AnimatePresence>
   )
