@@ -18,7 +18,7 @@ export const PLATFORMS = [
     blurb: 'Inventory and appraisals.',
     status: 'credentials',
     externalUrl: null,
-    note: 'Live on Production for both stores. Two-store view is next.',
+    note: 'Inventory and appraisals for both stores in one view.',
   },
   {
     id: 'rapidrecon',
