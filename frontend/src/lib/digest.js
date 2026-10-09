@@ -42,6 +42,9 @@ export function flattenInventory(item) {
     vin,
     stockNumber,
     status,
+    // vAuto keeps removed vehicles in the list with the status DELETED. They
+    // are not stock, so the digest and the Inventory page hide them by default.
+    deleted: status.toUpperCase() === 'DELETED',
     disposition: item.disposition || '',
     listPrice: item.pricing?.listPrice ?? null,
     currency: item.pricing?.currency ?? 'USD',
@@ -136,7 +139,9 @@ function groupBy(rows, storeIds, keyOf) {
 }
 
 export function summarizeInventory(allRows, storeIds) {
-  const rows = allRows.filter((r) => storeIds.includes(r.storeId))
+  const inStores = allRows.filter((r) => storeIds.includes(r.storeId))
+  const hiddenDeleted = inStores.filter((r) => r.deleted).length
+  const rows = inStores.filter((r) => !r.deleted)
   const perStore = zeroCounts(storeIds)
   rows.forEach((r) => (perStore[r.storeId] += 1))
 
@@ -158,6 +163,7 @@ export function summarizeInventory(allRows, storeIds) {
 
   return {
     total: rows.length,
+    hiddenDeleted,
     perStore,
     aged,
     knownAges: known.length,

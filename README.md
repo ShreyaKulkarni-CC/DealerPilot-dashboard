@@ -8,8 +8,10 @@ real data behind it. It is built as a React frontend plus a FastAPI backend
 that reads vAuto's Appraisal and Inventory APIs.
 
 This is an early version. It has been tested against vAuto **Sandbox** data
-and against fake data for layout and speed. It has not yet been checked
-against real Production data (see "Checking real data" below).
+and against fake data for layout and speed. A light read-only check of
+Production (the first 500 records of each list per store) has been run and
+shaped some choices below (see "Checking real data"). The full Production
+load has not been tried yet.
 
 ## Status at a glance
 
@@ -18,7 +20,7 @@ against real Production data (see "Checking real data" below).
 | Backend (FastAPI) | Working: two stores, 5 minute cache, rate limits, input checks, CORS limited to localhost |
 | vAuto Inventory API | Connected, tested on Sandbox |
 | vAuto Appraisal API | Connected, tested on Sandbox |
-| Production | Supported in code (`ENVIRONMENT=production` and `VAUTO_STORES`). Real data not yet checked in the dashboard |
+| Production | Supported in code (`ENVIRONMENT=production` and `VAUTO_STORES`). Light data check done. The full load in the dashboard is not tried yet |
 | Home page | Done: platform cards, quick links |
 | vAuto digest | Done: totals, age bands, status charts, weekly appraisals, longest on the lot |
 | Inventory page | Done: one scrolling list, grouping, filters, search, multi-sort, detail panel |
@@ -36,18 +38,24 @@ against real Production data (see "Checking real data" below).
 
 - **Home** lists the platforms with their status and has quick links into
   vAuto.
-- **vAuto digest** shows vehicles in inventory, appraisals, vehicles over
-  60 days, average days on the lot, and charts for age bands, inventory
+- **vAuto digest** shows vehicles in inventory (vehicles with the status
+  DELETED are not counted, and the page says how many were left out),
+  appraisals, vehicles over 60 days, average days on the lot, and charts for age bands, inventory
   status, appraisals per week and appraisal status. Each chart has a table
   view. The eight oldest vehicles are listed at the bottom.
-- **Inventory** shows every vehicle in one list with no "load more". Group
+- **Inventory** shows every vehicle in one list with no "load more".
+  Vehicles with the status DELETED are hidden by default (on Production
+  they are most of the records). The "Show deleted" button brings them
+  back, and the summary line says how many are hidden. Group
   by status (the default), age band, make, store or nothing. Filter by
   status, age band, make and disposition, search, sort by any column
   (Shift+click for a second sort), and click a row for a side panel with
   all the details vAuto sent. "Aged inventory" in the menu is this same
   page filtered to vehicles over 60 days.
-- **Appraisals** works the same way. Group by status (default), created
-  month, store, completed or make. Filter by status, completed and make.
+- **Appraisals** works the same way. Group by completed (default), status,
+  created month, store or make. Filter by status, completed and make. The
+  appraised value is not on list records, so it is loaded when you open a
+  row, and the list has no Appraised column unless vAuto sends it.
 - **Store switcher** at the top: Candy Cars, Bridgeland Auto Brokers, or
   both. Switching filters what is already loaded, it does not ask vAuto
   again.
@@ -193,7 +201,8 @@ Never committed. Filled in by whoever runs this, following `.env.example`.
 Some things cannot be known from Sandbox, and the dashboard should not guess
 them: the real status names, whether `createdOn` is the true stock-in date,
 and which vehicle fields vAuto sends on list records. `backend/scripts/data_check.py`
-answers these. It is read-only and gentle: GET requests only, one request at
+answers these. It also shows days on lot per status, so the live vehicles
+can be read separately from DELETED ones. It is read-only and gentle: GET requests only, one request at
 a time, one store at a time, a pause between pages, and it stops at the first
 rate limit or error without retrying. It prints counts, status names, date
 ranges and which fields are present. It never prints VINs, stock numbers,
@@ -235,11 +244,16 @@ and are not saved here.
 - The cache lives in the backend's memory, so it resets when the backend
   restarts, and it only works with a single backend process.
 - Days on the lot depends on `createdOn` (see above).
-- Real Production status names are not known yet. Charts and filters use
-  whatever vAuto sends.
-- Row details show only the fields vAuto sends on list records. Some fields
-  (for example the appraised value) depend on the permissions of the
-  credentials.
+- Production inventory status in the first 500 records per store was mostly
+  DELETED, with a few ACTIVE and USERADDED. What USERADDED means is not
+  confirmed, so those vehicles are kept in and shown as their own status.
+- Production appraisal status was the text "None" for nearly every record,
+  so the Appraisals page groups by Completed first.
+- Row details show the fields vAuto sends on list records. The appraised
+  value is fetched when a row is opened, and shows a message if vAuto does
+  not send it for this account.
+- Whether `createdOn` is the stock-in date for ACTIVE vehicles is still
+  open. Compare the dashboard's ACTIVE count and ages with vAuto.
 - Keyboard use and contrast were checked with an automated scanner, not with
   a real screen reader.
 
@@ -261,8 +275,9 @@ and are not saved here.
 
 ## What's next
 
-1. **Check real Production data** with `data_check.py`, then confirm the
-   status names and the `createdOn` question.
+1. **Open the dashboard against Production** for the first time (full
+   load: first-load time, rate limits, ACTIVE counts per store against
+   vAuto), then settle the `createdOn` and USERADDED questions.
 2. **AI summaries** on each digest page, limited to days on the lot, status
    and appraisals. Needs a decision on which AI service to use. Any key is
    handled like the vAuto credentials and is never pasted in chat.

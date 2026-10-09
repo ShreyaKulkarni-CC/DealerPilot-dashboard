@@ -83,6 +83,25 @@ def test_inventory_status_and_fill_rates():
     assert fills["vehicle.make"] == 3 and fills["vehicle.odometer"] == 0 and fills["status"] == 2
 
 
+def test_inventory_age_is_split_by_status():
+    recs = (
+        [inv(i, status="DELETED", created=iso(400)) for i in range(5)]
+        + [inv(10 + i, status="ACTIVE", created=iso(d)) for i, d in enumerate([5, 20, 70])]
+        + [inv(20, status="USERADDED")]
+    )
+    s = data_check.summarize_inventory(recs, now=NOW)
+    rows = {r["status"]: r for r in s["by_status"]}
+    assert [r["status"] for r in s["by_status"]][:2] == ["DELETED", "ACTIVE"]  # biggest first
+    assert rows["DELETED"]["median"] == 400 and rows["DELETED"]["over_60"] == 5
+    assert rows["ACTIVE"]["count"] == 3 and rows["ACTIVE"]["median"] == 20 and rows["ACTIVE"]["over_60"] == 1
+    assert rows["USERADDED"]["usable"] == 0
+    text = "\n".join(data_check.render_inventory("x", s))
+    assert "ACTIVE: 3 records, median 20 days" in text
+    assert "USERADDED: 1 records, no usable createdOn" in text
+    for forbidden in ["SECRET-ID", "STOCK", "VIN-NEVER-PRINT"]:
+        assert forbidden not in text
+
+
 def test_appraisal_crosstab_value_and_months():
     recs = [
         {"id": "a1", "centralizedStatus": "Completed", "isCompleted": True, "created": iso(2), "appraisalValue": {"appraisedValue": 10000}},

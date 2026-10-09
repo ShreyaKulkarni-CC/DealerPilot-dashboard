@@ -1,7 +1,7 @@
 import { Copy, RefreshCw, TriangleAlert, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { sanitizeSearchTerm } from '../api/client'
+import { getAppraisal, sanitizeSearchTerm } from '../api/client'
 import DetailDrawer from '../components/explorer/DetailDrawer'
 import ExplorerTable from '../components/explorer/ExplorerTable'
 import FacetFilter from '../components/explorer/FacetFilter'
@@ -44,6 +44,17 @@ function plain(value) {
     }
   }
   return String(value)
+}
+
+function appraisedValueText(raw, selected, detail) {
+  const fromList = money(raw.appraisalValue?.appraisedValue)
+  if (fromList) return fromList
+  if (detail.id === selected.id) {
+    if (detail.state === 'loading') return 'Loading…'
+    if (detail.state === 'error') return `Could not load: ${String(detail.message).slice(0, 140)}`
+    if (detail.state === 'done') return money(detail.value) ?? 'Not available (empty, or not permissioned for this account)'
+  }
+  return 'Not available (empty, or not permissioned for this account)'
 }
 
 function vehicleName(r) {
@@ -159,6 +170,11 @@ export default function Appraisals() {
     [filtered],
   )
 
+  // On Production the list does not carry the appraised value (only the single
+  // appraisal request does), so the column only appears if some value is there.
+  const hasValues = useMemo(() => scoped.some((r) => typeof r.value === 'number'), [scoped])
+  const sorting = useMemo(() => (hasValues ? p.sort : p.sort.filter((s) => s.id !== 'value')), [hasValues, p.sort])
+
   const activeFilters = p.status.length + p.make.length + p.done.length + (p.q ? 1 : 0)
 
   // ---- table setup ----
@@ -188,15 +204,19 @@ export default function Appraisals() {
         ),
       },
       { id: 'status', header: 'Status', accessor: (r) => r.status, width: 'minmax(110px, 1fr)', cell: (r) => <span className="truncate text-ink-2">{r.status}</span> },
-      {
-        id: 'value',
-        header: 'Appraised',
-        accessor: (r) => r.value,
-        width: '112px',
-        align: 'right',
-        descFirst: true,
-        cell: (r) => <span className="font-semibold text-ink">{money(r.value) ?? <span className="font-normal text-ink-3">—</span>}</span>,
-      },
+      ...(hasValues
+        ? [
+            {
+              id: 'value',
+              header: 'Appraised',
+              accessor: (r) => r.value,
+              width: '112px',
+              align: 'right',
+              descFirst: true,
+              cell: (r) => <span className="font-semibold text-ink">{money(r.value) ?? <span className="font-normal text-ink-3">—</span>}</span>,
+            },
+          ]
+        : []),
       {
         id: 'created',
         header: 'Created',
@@ -220,7 +240,7 @@ export default function Appraisals() {
           ),
       },
     ],
-    [allStores],
+    [allStores, hasValues],
   )
 
   const groupBy = useMemo(() => {
@@ -250,21 +270,29 @@ export default function Appraisals() {
           return b.key.localeCompare(a.key)
         })
     }
+    if (p.group === 'done') {
+      // Open work first.
+      return (list) => [...list].sort((a, b) => (a.key === NOT_DONE ? -1 : 0) - (b.key === NOT_DONE ? -1 : 0))
+    }
     return (list) => [...list].sort((a, b) => b.rows.length - a.rows.length || String(a.label).localeCompare(String(b.label)))
   }, [p.group])
 
-  const groupSummary = useCallback((rows) => {
-    const completed = rows.filter((r) => r.completed).length
-    const avg = averageValue(rows)
-    return [`${fmt(completed)} completed`, avg !== null ? `avg ${money(avg)}` : null].filter(Boolean).join(' · ')
-  }, [])
+  const groupSummary = useCallback(
+    (rows) => {
+      const avg = averageValue(rows)
+      // When the groups are already Completed / Not completed, repeating the count adds nothing.
+      const completed = p.group === 'done' ? null : `${fmt(rows.filter((r) => r.completed).length)} completed`
+      return [completed, avg !== null ? `avg ${money(avg)}` : null].filter(Boolean).join(' · ')
+    },
+    [p.group],
+  )
 
   const onSortingChange = useCallback(
     (updater) => {
-      const next = typeof updater === 'function' ? updater(p.sort) : updater
+      const next = typeof updater === 'function' ? updater(sorting) : updater
       update({ sort: next })
     },
-    [p.sort, update],
+    [sorting, update],
   )
 
   // ---- selected appraisal (stored in the address as ?v=store~id) ----
@@ -283,6 +311,40 @@ export default function Appraisals() {
       // Clipboard blocked: nothing to do.
     }
   }
+
+  // The list has no appraised value on Production, so it is requested for the
+  // one appraisal that is open. Answers are kept so reopening is instant.
+  const valueCache = useRef(new Map())
+  const [detail, setDetail] = useState({ id: null, state: 'idle', value: null, message: '' })
+  const selectedId = selected?.id ?? null
+  const needsValue = selected ? typeof selected.value !== 'number' : false
+  useEffect(() => {
+    if (!selectedId || !needsValue) {
+      setDetail({ id: null, state: 'idle', value: null, message: '' })
+      return undefined
+    }
+    const cached = valueCache.current.get(selectedId)
+    if (cached) {
+      setDetail({ id: selectedId, state: 'done', value: cached.value, message: '' })
+      return undefined
+    }
+    let cancelled = false
+    setDetail({ id: selectedId, state: 'loading', value: null, message: '' })
+    getAppraisal(selectedId)
+      .then((res) => {
+        if (cancelled) return
+        const value = typeof res?.appraisalValue?.appraisedValue === 'number' ? res.appraisalValue.appraisedValue : null
+        valueCache.current.set(selectedId, { value })
+        setDetail({ id: selectedId, state: 'done', value, message: '' })
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setDetail({ id: selectedId, state: 'error', value: null, message: (typeof err?.detail === 'string' && err.detail) || err?.message || 'Request failed' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedId, needsValue])
 
   const sections = useMemo(() => {
     if (!selected) return []
@@ -314,12 +376,12 @@ export default function Appraisals() {
           { label: 'Dealer entity', value: plain(raw.organization?.entityLogicalId) },
           {
             label: 'Appraised value',
-            value: money(raw.appraisalValue?.appraisedValue) ?? 'Not available (empty, or not permissioned for this account)',
+            value: appraisedValueText(raw, selected, detail),
           },
         ],
       },
     ]
-  }, [selected])
+  }, [selected, detail])
 
   const loading = loadStatus === 'idle' || loadStatus === 'loading'
   const busy = loading || loadStatus === 'refreshing'
@@ -423,7 +485,7 @@ export default function Appraisals() {
                 label="Appraisals"
                 columns={columns}
                 data={filtered}
-                sorting={p.sort}
+                sorting={sorting}
                 onSortingChange={onSortingChange}
                 groupBy={groupBy}
                 orderGroups={orderGroups}

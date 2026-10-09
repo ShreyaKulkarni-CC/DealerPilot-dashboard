@@ -196,6 +196,12 @@ export default function Overview() {
                       </div>
                       <p className="mt-3 text-sm text-ink-3">
                         {stores.length > 1 ? 'Across the selected stores.' : `At ${stores[0]?.name}.`}
+                        {inv.hiddenDeleted > 0 && (
+                          <>
+                            {' '}
+                            {fmt(inv.hiddenDeleted)} deleted {inv.hiddenDeleted === 1 ? 'record is' : 'records are'} not counted.
+                          </>
+                        )}
                       </p>
                       <StoreSplit stores={stores} counts={inv.perStore} total={inv.total} />
                     </Panel>

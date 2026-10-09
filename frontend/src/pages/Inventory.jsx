@@ -121,10 +121,15 @@ export default function Inventory() {
   )
 
   const storeKey = selectedStores.map((s) => s.id).join('|')
-  const scoped = useMemo(() => {
+  const inStores = useMemo(() => {
     const ids = new Set(storeKey.split('|'))
     return allRows.filter((r) => ids.has(r.storeId))
   }, [allRows, storeKey])
+
+  // vAuto keeps removed vehicles in the list with the status DELETED. They are
+  // hidden unless "Show deleted" is on.
+  const scoped = useMemo(() => (p.deleted ? inStores : inStores.filter((r) => !r.deleted)), [inStores, p.deleted])
+  const hiddenDeleted = useMemo(() => (p.deleted ? 0 : inStores.length - scoped.length), [inStores, scoped, p.deleted])
 
   const f = useMemo(
     () => ({
@@ -400,6 +405,16 @@ export default function Inventory() {
                 >
                   Over {AGED_OVER_DAYS} days
                 </button>
+                <button
+                  type="button"
+                  aria-pressed={p.deleted}
+                  onClick={() => update({ deleted: !p.deleted })}
+                  className={`h-10 rounded-xl border px-3 text-sm font-medium backdrop-blur-xl transition-colors ${
+                    p.deleted ? 'border-accent/50 bg-accent/15 text-ink' : 'border-line/10 bg-surface/60 text-ink-2 hover:text-ink'
+                  }`}
+                >
+                  Show deleted
+                </button>
                 {activeFilters > 0 && (
                   <button
                     type="button"
@@ -433,6 +448,7 @@ export default function Inventory() {
                   {summary.count !== scoped.length && ` of ${fmt(scoped.length)}`} vehicles
                   {summary.avg !== null && ` · avg ${fmt(summary.avg)} days`}
                   {` · ${fmt(summary.aged)} over ${AGED_OVER_DAYS} days`}
+                  {hiddenDeleted > 0 && ` · ${fmt(hiddenDeleted)} deleted hidden`}
                 </p>
               </div>
 

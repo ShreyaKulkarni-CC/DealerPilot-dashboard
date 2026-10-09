@@ -86,11 +86,15 @@ A quick pass to confirm it works end to end:
 1. **vAuto digest** (click vAuto in the menu): the numbers are real, not
    zeros or dashes, the charts draw, and the line under the title says when
    the data was last updated.
-2. **Inventory**: the list has rows, grouped by status. Try the search box,
+2. **Inventory**: the list has rows, grouped by status. DELETED vehicles are
+   hidden, and the line above the list says how many (the "Show deleted"
+   button brings them back). Try the search box,
    a Status filter, "Group by Age band", and click a column heading to sort.
    Click a row: a side panel opens with that vehicle's details. Press Esc to
    close it.
-3. **Appraisals**: same checks. Try "Group by Created month".
+3. **Appraisals**: same checks. It opens grouped by Completed. Try "Group by
+   Created month". Click a row: the appraised value shows "Loading…" and
+   then the amount, or a short message if vAuto does not send it.
 4. **Aged inventory** (under vAuto in the menu): this is Inventory with the
    "Over 60 days" filter already on.
 5. **Store switcher**: pick one store, then Both stores. The numbers change

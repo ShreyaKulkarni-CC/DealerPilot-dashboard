@@ -141,6 +141,35 @@ def percentile(sorted_values, p):
     return sorted_values[idx]
 
 
+def status_age_breakdown(records, now, limit=6):
+    """Days on lot per status, so DELETED records do not hide how the live ones look.
+
+    Only counts and ages: nothing that identifies a vehicle.
+    """
+    groups = {}
+    for r in records:
+        groups.setdefault(r.get("status") or "(no status)", []).append(r)
+    rows = []
+    for status, recs in groups.items():
+        stamps = [c for c in (parse_ts(r.get("createdOn")) for r in recs) if c is not None]
+        ages = sorted(days_since(c, now) for c in stamps)
+        days = Counter(c.date().isoformat() for c in stamps)
+        top = days.most_common(1)
+        rows.append(
+            {
+                "status": status,
+                "count": len(recs),
+                "usable": len(ages),
+                "median": percentile(ages, 0.5),
+                "p90": percentile(ages, 0.9),
+                "over_60": sum(1 for a in ages if a > 60),
+                "top_date_share": (100.0 * top[0][1] / len(stamps)) if top else 0.0,
+            }
+        )
+    rows.sort(key=lambda x: (-x["count"], x["status"]))
+    return rows[:limit]
+
+
 def summarize_inventory(records, now=None):
     now = now or datetime.now(timezone.utc)
     created, bad, future = [], 0, 0
@@ -189,6 +218,7 @@ def summarize_inventory(records, now=None):
             "equal_updatedOn": same_as_updated,
             "within_day_updatedOn": within_day,
         },
+        "by_status": status_age_breakdown(records, now),
         "fields": fill_rates(records, INVENTORY_FIELDS),
     }
 
@@ -280,6 +310,17 @@ def render_inventory(name, s, note=None):
                 f"    createdOn equals updatedOn: {c['equal_updatedOn']} of {c['with_updatedOn']}; "
                 f"within one day of each other: {c['within_day_updatedOn']}"
             )
+    if s["by_status"]:
+        lines.append("  Days on lot by status (the dashboard hides DELETED, so check the live ones):")
+        for row in s["by_status"]:
+            if row["usable"]:
+                lines.append(
+                    f"    {row['status']}: {row['count']} records, median {row['median']} days, "
+                    f"90th percentile {row['p90']}, over 60 days {row['over_60']}, "
+                    f"{row['top_date_share']:.0f}% on one date"
+                )
+            else:
+                lines.append(f"    {row['status']}: {row['count']} records, no usable createdOn")
     lines += ["  Field present on list records (count, share):"] + render_fields(s["fields"], n)
     return lines
 

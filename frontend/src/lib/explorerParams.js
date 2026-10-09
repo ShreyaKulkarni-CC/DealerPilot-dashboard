@@ -25,15 +25,17 @@ export const INVENTORY_VIEW = {
 }
 
 export const APPRAISAL_VIEW = {
+  // Completed comes first: on Production nearly every appraisal has the status
+  // "None", so the completed flag is the useful split.
   groups: [
+    { id: 'done', label: 'Completed' },
     { id: 'status', label: 'Status' },
     { id: 'month', label: 'Created month' },
     { id: 'store', label: 'Store' },
-    { id: 'done', label: 'Completed' },
     { id: 'make', label: 'Make' },
     { id: 'none', label: 'No grouping' },
   ],
-  defaultGroup: 'status',
+  defaultGroup: 'done',
   defaultSort: [{ id: 'created', desc: true }],
   listKeys: ['status', 'make', 'done'],
 }
@@ -57,6 +59,7 @@ export function readParams(sp, sortableIds, view = INVENTORY_VIEW) {
   const out = {
     q: (sp.get('q') || '').slice(0, 60),
     aged: sp.get('aged') === '1',
+    deleted: sp.get('deleted') === '1',
     group: view.groups.some((g) => g.id === group) ? group : view.defaultGroup,
     sort: sort === null ? view.defaultSort : sort,
     v: sp.get('v') || '',
@@ -78,8 +81,8 @@ export function writeParams(current, patch, view = INVENTORY_VIEW) {
     next.delete(key)
     if (view.listKeys.includes(key)) {
       value.forEach((v) => next.append(key, v))
-    } else if (key === 'aged') {
-      if (value) next.set('aged', '1')
+    } else if (key === 'aged' || key === 'deleted') {
+      if (value) next.set(key, '1')
     } else if (key === 'group') {
       if (value && value !== view.defaultGroup) next.set('group', value)
     } else if (key === 'sort') {
