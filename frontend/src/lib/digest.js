@@ -57,15 +57,50 @@ export function flattenInventory(item) {
   }
 }
 
+export const NO_MONTH = 'No date'
+
+const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' })
+
+// "2026-09" style key plus a readable label, for grouping appraisals by month.
+// Records with no usable created date get NO_MONTH.
+function monthOf(created) {
+  if (!created) return { key: NO_MONTH, label: NO_MONTH, ts: null }
+  const d = new Date(created)
+  if (Number.isNaN(d.getTime())) return { key: NO_MONTH, label: NO_MONTH, ts: null }
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  return { key, label: MONTH_FORMAT.format(d), ts: d.getTime() }
+}
+
 export function flattenAppraisal(item) {
+  const year = item.vehicle?.year ?? null
+  const make = item.vehicle?.make ?? ''
+  const model = item.vehicle?.model ?? ''
+  const vin = item.vehicle?.vin ?? ''
+  const status = item.centralizedStatus || 'No status'
+  const month = monthOf(item.created)
   return {
     id: item.id,
     storeId: item.storeId,
     storeName: item.storeName,
-    status: item.centralizedStatus || 'No status',
+    status,
     completed: Boolean(item.isCompleted),
     created: item.created ?? null,
     value: item.appraisalValue?.appraisedValue ?? null,
+    // The fields below are used by the Appraisals page.
+    year,
+    make,
+    model,
+    vin,
+    createdTs: month.ts,
+    monthKey: month.key,
+    monthLabel: month.label,
+    // Lower-case text used by the search box, built once per record.
+    search: [year, make, model, item.vehicle?.series, vin, status, item.storeName]
+      .filter((x) => x !== null && x !== undefined && x !== '')
+      .join(' ')
+      .toLowerCase(),
+    // The full record as vAuto returned it, shown in the detail panel.
+    raw: item,
   }
 }
 
