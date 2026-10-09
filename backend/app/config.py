@@ -19,10 +19,11 @@ calling. Originally this file assumed separate credentials per API; fixed
 here to match the real screen.
 """
 
+import re
 from functools import lru_cache
-from typing import Optional
+from typing import NamedTuple, Optional
 
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Confirmed real, non-secret values.
@@ -37,6 +38,37 @@ VAUTO_INVENTORY_BASE_URL_PROD = "https://api.coxautoinc.com/va/inventory-vehicle
 
 # Sandbox's shared test dealer -- confirmed public/non-secret value.
 VAUTO_SANDBOX_ENTITY_LOGICAL_ID = "EXT-TEST-01"
+
+
+class Store(NamedTuple):
+    id: str
+    name: str
+
+
+_STORE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]{1,40}$")
+_STORE_NAME_RE = re.compile(r"^[A-Za-z0-9 .&'\-]{1,60}$")
+
+
+def parse_stores(raw: str) -> list[Store]:
+    """Parse 'MP12345=Store One,MP67890=Store Two' into Store objects.
+    Store IDs and names are not secrets, but they are still validated so a
+    typo fails at startup with a clear message instead of at request time."""
+    stores: list[Store] = []
+    for entry in (raw or "").split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        store_id, sep, name = entry.partition("=")
+        store_id, name = store_id.strip(), name.strip()
+        if not sep or not _STORE_ID_RE.match(store_id) or not _STORE_NAME_RE.match(name):
+            raise ValueError(
+                "VAUTO_STORES entries must look like ID=Store Name, separated by commas "
+                "(letters, digits, spaces, . & ' - only)"
+            )
+        if any(s.id == store_id for s in stores):
+            raise ValueError(f"VAUTO_STORES lists {store_id} more than once")
+        stores.append(Store(store_id, name))
+    return stores
 
 
 class Settings(BaseSettings):
@@ -59,6 +91,31 @@ class Settings(BaseSettings):
     # is the shared "EXT-TEST-01" -- used automatically on sandbox unless
     # overridden.
     VAUTO_ENTITY_LOGICAL_ID: Optional[str] = None
+
+    # The stores the dashboard shows on Production, as "ID=Name" pairs
+    # separated by commas, e.g. "MP12345=Store One,MP67890=Store Two".
+    # Store IDs are not secrets. Ignored on sandbox, where only the shared
+    # test store exists.
+    VAUTO_STORES: str = ""
+
+    # How long fetched store data is reused before asking vAuto again.
+    VAUTO_CACHE_SECONDS: int = 300
+
+    @field_validator("VAUTO_STORES")
+    @classmethod
+    def _check_stores(cls, value: str) -> str:
+        parse_stores(value)  # raises a clear error at startup if malformed
+        return value
+
+    @property
+    def vauto_stores(self) -> list[Store]:
+        if self.ENVIRONMENT == "sandbox":
+            store_id = self.VAUTO_ENTITY_LOGICAL_ID or VAUTO_SANDBOX_ENTITY_LOGICAL_ID
+            return [Store(store_id, "Sandbox test store")]
+        stores = parse_stores(self.VAUTO_STORES)
+        if not stores and self.VAUTO_ENTITY_LOGICAL_ID:
+            stores = [Store(self.VAUTO_ENTITY_LOGICAL_ID, "Store")]
+        return stores
 
     @property
     def vauto_token_url(self) -> str:

@@ -5,7 +5,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
 from app.rate_limit import limiter
-from app.routers import health, inventory
+from app.routers import health, inventory, stores
 
 settings = get_settings()
 
@@ -32,3 +32,4 @@ async def add_security_headers(request: Request, call_next):
 
 app.include_router(health.router)
 app.include_router(inventory.router)
+app.include_router(stores.router)
