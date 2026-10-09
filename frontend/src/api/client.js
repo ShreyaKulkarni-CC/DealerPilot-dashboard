@@ -83,6 +83,29 @@ export function getHealth() {
   return apiFetch('/health')
 }
 
+export function getStores() {
+  return apiFetch('/api/stores')
+}
+
+// Every record for every configured store, loaded server-side page by page and
+// cached there. Used by the digest and (later) the explorers. These can take a
+// while on a big store, so they get a longer timeout than normal calls.
+const ALL_TIMEOUT_MS = 120000
+
+export function getAllInventory({ refresh = false } = {}) {
+  return apiFetch('/api/all/inventory', {
+    params: { refresh: refresh ? 'true' : undefined },
+    timeoutMs: ALL_TIMEOUT_MS,
+  })
+}
+
+export function getAllAppraisals({ refresh = false } = {}) {
+  return apiFetch('/api/all/appraisals', {
+    params: { refresh: refresh ? 'true' : undefined },
+    timeoutMs: ALL_TIMEOUT_MS,
+  })
+}
+
 export function getInventory({ filter, sort, limit = '1,50' } = {}) {
   return apiFetch('/api/inventory', { params: { filter, sort, limit } })
 }

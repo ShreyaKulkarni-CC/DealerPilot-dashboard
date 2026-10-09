@@ -1,3 +1,183 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---------- Design tokens (space separated RGB so Tailwind can add alpha) ---------- */
+@layer base {
+  :root {
+    --bg: 246 244 240;
+    --surface: 255 255 255;
+    --surface-2: 250 248 244;
+    --ink: 20 18 15;
+    --ink-2: 82 78 72;
+    --ink-3: 122 116 108;
+    --line: 20 18 15;
+    --accent: 200 68 8;
+    /* Chart colours: validated categorical palette, slots 1-8 (light steps) */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #4a3aa7;
+    --series-8: #e34948;
+    --viz-surface: #ffffff;
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg: 10 10 12;
+    --surface: 22 22 26;
+    --surface-2: 30 30 36;
+    --ink: 244 242 238;
+    --ink-2: 168 164 158;
+    --ink-3: 118 114 108;
+    --line: 255 255 255;
+    --accent: 255 122 54;
+    /* Same eight hues, stepped for the dark surface */
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --viz-surface: #16161a;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.35);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+/* ---------- Reusable pieces ---------- */
+@layer components {
+  .text-gradient {
+    background-image: linear-gradient(100deg, rgb(var(--accent)) 0%, rgb(255 186 120) 45%, rgb(var(--accent)) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 9s linear infinite;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(90px);
+    animation: drift 26s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(60px, 40px, 0) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-gradient,
+  .orb {
+    animation: none;
+  }
+}
+
+/* ---------- Command palette (cmdk) ---------- */
+[cmdk-overlay] {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(6px);
+}
+
+[cmdk-dialog] {
+  position: fixed;
+  z-index: 61;
+  top: 16vh;
+  left: 50%;
+  width: min(640px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgb(var(--line) / 0.12);
+  background: rgb(var(--surface) / 0.92);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.45);
+}
+
+[cmdk-input] {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgb(var(--line) / 0.1);
+  background: transparent;
+  padding: 18px 20px;
+  font-size: 16px;
+  color: rgb(var(--ink));
+  outline: none;
+}
+
+[cmdk-input]::placeholder {
+  color: rgb(var(--ink-3));
+}
+
+[cmdk-list] {
+  max-height: 360px;
+  overflow: auto;
+  padding: 8px;
+}
+
+[cmdk-group-heading] {
+  padding: 10px 12px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-3));
+}
+
+[cmdk-item] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: rgb(var(--ink-2));
+}
+
+[cmdk-item][data-selected='true'] {
+  background: rgb(var(--accent) / 0.12);
+  color: rgb(var(--ink));
+}
+
+[cmdk-empty] {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: rgb(var(--ink-3));
+}
