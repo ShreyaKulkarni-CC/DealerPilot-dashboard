@@ -1,10 +1,20 @@
 # --- Secrets: never committed ---
+# Any .env file (.env.local, .env.production, .env.backup ...) except the
+# template, plus common key, certificate and credential file types.
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
 !.env.example
 *.pem
 *.key
+*.p12
+*.pfx
+*.jks
+*.secret
+*.secrets
+credentials*.json
+secrets*.json
+service-account*.json
 
 # --- Python (backend) ---
 __pycache__/
@@ -38,3 +48,6 @@ Claude outputs/
 
 # --- Endpoint test reports (contain Client IDs and store IDs, keep local) ---
 backend/test-reports/
+
+# --- Files moved aside for later deletion (this folder is never committed) ---
+_to_delete/

@@ -146,11 +146,8 @@ dealerpilot-dashboard/
     └── ENDPOINT_TESTING.md
 ```
 
-Some older files are still on disk but are no longer used by any page:
-`pages/AgedInventory.jsx`, `pages/AppraisalDetail.jsx`,
-`hooks/usePaginatedList.js` and `components/AgeDistributionChart.jsx`. They
-can be deleted whenever convenient. The route `/inventory/:id` still opens
-the older single-vehicle page, which nothing links to any more.
+The route `/inventory/:id` still opens an older single-vehicle page, which
+nothing links to any more. It can be removed when convenient.
 
 ## Running it locally
 
