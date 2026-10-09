@@ -35,11 +35,21 @@ function ConnectorBadge({ name, status }) {
   )
 }
 
+// Each call is settled on its own, so inventory failing does not hide
+// appraisals (and the other way round). Only /health is required.
+async function settle(promise) {
+  try {
+    return { ok: true, value: await promise }
+  } catch (error) {
+    return { ok: false, error }
+  }
+}
+
 async function loadOverview() {
-  const [health, inventory, appraisals] = await Promise.all([
-    getHealth(),
-    getInventory({ limit: '1,100' }),
-    getAppraisals({ limit: '1,100' }),
+  const health = await getHealth()
+  const [inventory, appraisals] = await Promise.all([
+    settle(getInventory({ limit: '1,100' })),
+    settle(getAppraisals({ limit: '1,100' })),
   ])
   return { health, inventory, appraisals }
 }
@@ -50,7 +60,7 @@ export default function Overview() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800">Overview</h1>
+        <h1 className="text-2xl font-semibold text-slate-800">vAuto digest</h1>
         <RefreshButton onClick={reload} loading={loading} />
       </div>
 
@@ -62,51 +72,68 @@ export default function Overview() {
         </div>
       )}
 
-      {!loading && !error && data && (
-        <>
-          {(() => {
-            const { health, inventory, appraisals } = data
-            const inventoryItems = inventory.items || []
-            const appraisalItems = appraisals.items || []
+      {!loading && !error && data && (() => {
+        const { health, inventory, appraisals } = data
+        const inventoryItems = inventory.ok ? inventory.value.items || [] : []
+        const appraisalItems = appraisals.ok ? appraisals.value.items || [] : []
 
-            const ages = inventoryItems
-              .map((item) => daysInInventory(item.createdOn))
-              .filter((d) => d !== null)
-            const agedCount = ages.filter((d) => d >= AGE_THRESHOLD_DAYS).length
-            const avgAge = ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null
+        const ages = inventoryItems
+          .map((item) => daysInInventory(item.createdOn))
+          .filter((d) => d !== null)
+        const agedCount = ages.filter((d) => d >= AGE_THRESHOLD_DAYS).length
+        const avgAge = ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null
 
-            return (
-              <>
-                <p className="mt-1 text-sm text-slate-500">
-                  Environment: <span className="font-medium">{health.environment}</span>
-                </p>
+        return (
+          <>
+            <p className="mt-1 text-sm text-slate-500">
+              Environment: <span className="font-medium">{health.environment}</span>
+            </p>
 
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <ConnectorBadge name="vAuto Appraisal API" status={health.connectors?.vauto_appraisal} />
-                  <ConnectorBadge name="vAuto Inventory API" status={health.connectors?.vauto_inventory} />
-                </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <ConnectorBadge name="vAuto Appraisal API" status={health.connectors?.vauto_appraisal} />
+              <ConnectorBadge name="vAuto Inventory API" status={health.connectors?.vauto_inventory} />
+            </div>
 
-                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <StatCard label="Inventory vehicles" value={inventoryItems.length} />
-                  <StatCard label="Appraisals" value={appraisalItems.length} />
-                  <StatCard
-                    label="Aged 60+ days"
-                    value={agedCount}
-                    tone={agedCount > 0 ? 'warn' : 'good'}
-                    sublabel={`out of ${ages.length} with a known stock-in date`}
-                  />
-                  <StatCard label="Avg. days in inventory" value={avgAge ?? '—'} />
-                </div>
+            {!inventory.ok && (
+              <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                Inventory could not be loaded. {inventory.error?.message}
+              </div>
+            )}
+            {!appraisals.ok && (
+              <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                Appraisals could not be loaded. {appraisals.error?.message}
+              </div>
+            )}
 
-                <p className="mt-6 text-xs text-slate-400">
-                  Age is calculated from each vehicle's stock-in date (createdOn) returned by the vAuto
-                  Inventory API. This is sandbox test data, not real Bridgeland/Candy Cars inventory.
-                </p>
-              </>
-            )
-          })()}
-        </>
-      )}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Inventory vehicles" value={inventory.ok ? inventoryItems.length : '—'} />
+              <StatCard label="Appraisals" value={appraisals.ok ? appraisalItems.length : '—'} />
+              <StatCard
+                label="Aged 60+ days"
+                value={inventory.ok ? agedCount : '—'}
+                tone={inventory.ok && agedCount > 0 ? 'warn' : 'default'}
+                sublabel={inventory.ok ? `out of ${ages.length} with a known stock-in date` : undefined}
+              />
+              <StatCard label="Avg. days in inventory" value={avgAge ?? '—'} />
+            </div>
+
+            <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-medium text-slate-500">Summary</div>
+              <p className="mt-2 text-sm text-slate-400">
+                AI summaries are not turned on yet.
+              </p>
+            </div>
+
+            <p className="mt-6 text-xs text-slate-400">
+              Age is calculated from each vehicle's stock-in date (createdOn) returned by the vAuto
+              Inventory API.
+              {health.environment === 'sandbox'
+                ? ' The backend is in sandbox mode, so this is test data, not real Bridgeland or Candy Cars inventory.'
+                : ''}
+            </p>
+          </>
+        )
+      })()}
     </div>
   )
 }

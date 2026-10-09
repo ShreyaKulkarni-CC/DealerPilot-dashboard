@@ -35,3 +35,6 @@ Thumbs.db
 # --- Files the Claude desktop app syncs into this folder when it delivers
 # a file to chat (reports, exports) -- not part of the app itself ---
 Claude outputs/
+
+# --- Endpoint test reports (contain Client IDs and store IDs, keep local) ---
+backend/test-reports/

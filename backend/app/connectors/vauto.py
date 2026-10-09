@@ -47,6 +47,12 @@ class VAutoNotConfiguredError(RuntimeError):
     pass
 
 
+class VAutoTokenError(RuntimeError):
+    """The OAuth token request itself was rejected, before any API call.
+    Kept separate from API errors so the two failure stages are never
+    confused when reading an error message."""
+
+
 # --- Normalized response models (fields Optional per the confirmed
 # permission-visibility model -- absence means "not authorized for this
 # field", not a parsing failure) ---
@@ -128,7 +134,12 @@ class VAutoClient:
             raise VAutoNotConfiguredError(
                 "VAUTO_INVENTORY_CLIENT_ID/SECRET not set. See docs/INTEGRATION_TODO.md."
             )
-        token = await self._inventory_oauth.get_token(http)
+        try:
+            token = await self._inventory_oauth.get_token(http)
+        except httpx.HTTPStatusError as e:
+            raise VAutoTokenError(
+                f"Token request to Cox failed (HTTP {e.response.status_code}): {e.response.text}"
+            ) from e
         resp = await http.get(
             f"{self._settings.vauto_inventory_base_url}{path}",
             headers={**_HEADERS_BASE, "Authorization": f"Bearer {token}"},
@@ -171,7 +182,12 @@ class VAutoClient:
             raise VAutoNotConfiguredError(
                 "VAUTO_APPRAISAL_CLIENT_ID/SECRET not set. See docs/INTEGRATION_TODO.md."
             )
-        token = await self._appraisal_oauth.get_token(http)
+        try:
+            token = await self._appraisal_oauth.get_token(http)
+        except httpx.HTTPStatusError as e:
+            raise VAutoTokenError(
+                f"Token request to Cox failed (HTTP {e.response.status_code}): {e.response.text}"
+            ) from e
         resp = await http.get(
             f"{self._settings.vauto_appraisal_base_url}{path}",
             headers={**_HEADERS_BASE, "Authorization": f"Bearer {token}"},

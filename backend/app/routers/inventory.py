@@ -10,7 +10,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.config import Settings, get_settings
-from app.connectors.vauto import VAutoClient, VAutoNotConfiguredError
+from app.connectors.vauto import VAutoClient, VAutoNotConfiguredError, VAutoTokenError
 from app.rate_limit import limiter
 from app.validation import validate_filter, validate_id, validate_limit, validate_sort
 
@@ -44,6 +44,8 @@ async def list_inventory(
         raise HTTPException(status_code=501, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except VAutoTokenError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
@@ -66,6 +68,8 @@ async def get_inventory_detail(
         raise HTTPException(status_code=501, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except VAutoTokenError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
@@ -95,6 +99,8 @@ async def list_appraisals(
         raise HTTPException(status_code=501, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except VAutoTokenError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
@@ -117,6 +123,8 @@ async def get_appraisal_detail(
         raise HTTPException(status_code=501, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except VAutoTokenError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except httpx.TimeoutException:
